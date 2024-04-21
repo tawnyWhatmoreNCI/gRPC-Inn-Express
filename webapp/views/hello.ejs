@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Say Hello</title>
+</head>
+<body>
+  <form id="helloForm">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name">
+    <button type="button" id="submitButton">Submit</button> <!-- Change type to "button" to prevent default form submission -->
+  </form>
+  <p id="responseMessage"></p>
+  <script>
+    const nameInput = document.getElementById('name'); // Corrected id
+    const submitButton = document.getElementById('submitButton');
+    const responseMessageDiv = document.getElementById('responseMessage');
+
+    submitButton.addEventListener('click', async () => {
+      const name = nameInput.value;
+      try {
+        const response = await fetch('/sayHello', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name })
+        });
+        console.log('Response:', response);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const responseData = await response.text();
+        console.log('Server Response:', responseData);
+        responseMessageDiv.textContent = responseData;
+        // Handle the response as needed
+      } catch (error) {
+        console.error('Error:', error);
+        // Handle errors
+      }
+    });
+  </script>
+</body>
+</html>

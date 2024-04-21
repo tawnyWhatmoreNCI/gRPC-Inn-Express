@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+enum ReservationStatus {
+    PENDING = 0;
+    CONFIRMED = 1;
+    CANCELLED = 2;
+    CHECKED_IN = 3;
+    CHECKED_OUT = 4;
+}
+
+enum RoomType {
+    SINGLE = 0;
+    DOUBLE = 1;
+    FAMILY = 2;
+    SUITE = 3;
+}
+
+// Reservation object
+message Reservation {
+    int64 id = 1;
+    string user_id = 2;
+    string arrival_date = 3;
+    string departure_date = 4;
+    string check_in_time = 5;
+    string check_out_time = 6;
+    RoomType room_type = 7;
+    int32 room_number = 8;
+    ReservationStatus status = 9;
+}
+
+// User object
+message User {
+    string id = 1;
+    string name = 2;
+    repeated Reservation reservations = 3;
+}
+
+// Define the service
+service ReservationService {
+    rpc CheckIn(CheckInRequest) returns (Reservation) {}
+    rpc CheckOut(CheckOutRequest) returns (Reservation) {}
+    rpc CreateReservation(Reservation) returns (Reservation) {}
+    rpc UpdateReservation(UpdateReservationRequest) returns (Reservation) {}
+    rpc GetReservationById(GetReservationByIdRequest) returns (Reservation) {}
+    rpc CancelReservation(CancelReservationRequest) returns (Reservation) {}
+}
+
+// Request to get reservation by id
+message GetReservationByIdRequest {
+    int64 id = 1;
+}
+
+// Request to check in
+message CheckInRequest {
+    int64 id = 1;
+    string check_in_time = 2;
+}
+
+// Request to check out
+message CheckOutRequest {
+    int64 id = 1;
+    string check_out_time = 2;
+}
+
+// Request to cancel reservation
+message CancelReservationRequest {
+    int64 id = 1;
+}
+
+// Request to update reservation by id
+message UpdateReservationRequest {
+    int64 id = 1;
+    string arrival_date = 2;
+    string departure_date = 3;
+    RoomType room_type = 4;
+    int32 room_number = 5;
+}

@@ -1,0 +1,18 @@
+// hello.proto - just a test to get the workflow going 
+
+syntax = "proto3";
+
+// Define a gRPC service named Greeter
+service Greeter {
+  // Define a remote procedure call (RPC) named SayHello
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+// Define message types for request and response
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloReply {
+  string message = 1;
+}
