@@ -16,18 +16,19 @@ enum RoomType {
 }
 
 message Reservation {
-  string reservation_id = 1;
-  string guest_name = 2;
-  string room_number = 3;
-  string check_in_date = 4;
-  string check_out_date = 5;
-  RoomType room_type = 6;
-  ReservationStatus status = 7;
+    string user_id = 1;
+  string reservation_id = 2;
+  string guest_name = 3;
+  string room_number = 4;
+  string check_in_date = 5;
+  string check_out_date = 6;
+  RoomType room_type = 7;
+  ReservationStatus status = 8;
 }
 
 service ReservationService {
     //create a new reservation
-  rpc MakeReservation(Reservation) returns (ReservationResponse);
+  rpc MakeReservation(MakeReservationRequest) returns (ReservationResponse);
   //update an existing reservation
   rpc ModifyReservation(Reservation) returns (ReservationMessageResponse);
   //cancel an existing reservation
@@ -36,6 +37,12 @@ service ReservationService {
   rpc GetReservation(GetReservationRequest) returns (ReservationResponse);
   //get all reservations
   rpc GetAllReservations(EmptyRequest) returns (AllReservationResponse);
+  //GetReservationsByUserId
+    rpc GetReservationsByUserId(GetReservationsByUserIdRequest) returns (AllReservationResponse);
+  //check in a reservation
+    rpc CheckInReservation(GetReservationRequest) returns (ReservationMessageResponse);
+    //check out a reservation
+    rpc CheckOutReservation(GetReservationRequest) returns (ReservationMessageResponse);
 }
 
 /////REQUESTS//////
@@ -43,6 +50,19 @@ service ReservationService {
 message GetReservationRequest {
     string reservation_id = 1;
 }
+//request to get reservations by user id
+message GetReservationsByUserIdRequest {
+    string user_id = 1;
+}
+//request to make reservation. room number and status are determined by the server
+message MakeReservationRequest {
+    string user_id = 1;
+    string guest_name = 2;
+    string check_in_date = 3;
+    string check_out_date = 4;
+    RoomType room_type = 5;
+}
+
 //empty request
 message EmptyRequest {}
 

@@ -18,7 +18,12 @@
           </div>
           <div class="mb-3">
             <label for="room_type" class="form-label">Room Type</label>
-            <input type="text" class="form-control" id="room_type">
+            <select class="form-select mb-3" id="room_type" aria-label="Select Room Type">
+              <option selected>Select Room Type</option>
+              <option value="SINGLE">Single</option>
+              <option value="DOUBLE">Double</option>
+              <option value="FAMILY">Family</option>
+              <option value="SUITE">Suite</option>
           </div>
           <div class="mb-3">
             <label for="check_in_date" class="form-label">Check In Date</label>
@@ -28,101 +33,246 @@
             <label for="check_out_date" class="form-label">Check Out Date</label>
             <input type="date" class="form-control" id="check_out_date">
           </div>
+          <!--if we're admin a select to update the reservation status-->
+          <% if (isAdmin) { %>
+            <div class="mb-3">
+              <label for="status" class="form-label">Status</label>
+              <select class="form-select mb-3" id="status" aria-label="Select Status">
+                <option selected>Select Status</option>
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="CHECKED_IN">Checked In</option>
+                <option value="CHECKED_OUT">Checked Out</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="PENDING">Pending</option>
+              </select>
+            </div>
+            <% } %>
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="saveModify">Save changes</button>
+        <p id="modalMessage"></p>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-outline-danger" id="cancelReservation">Cancel Reservation</button>
+        <button type="button" class="btn btn-success" id="saveModify">Save changes</button>
       </div>
     </div>
   </div>
 </div>
 
-<!--Get Reservations From Server-->
-<% if (reservations.length === 0) { %>
+<!--Get Reservations From Server. reversing so newest is first-->
+<% if (reservations.length===0) { %>
   <p>No reservations found.</p>
-<% } else { %>
-  <% reservations.forEach((reservation, index) => { %>
-    <div class="card reservation">
-      <div class="card-body">
-        <h5 class="card-title">Reservation ID: <span class="res-id"><%= reservation.reservation_id %></span></h5>
-        <p class="card-text">Guest name: <%= reservation.guest_name %></p>
-        <p class="card-text">Arrival Date: <%= reservation.check_in_date %></p>
-        <p class="card-text">Departure Date: <%= reservation.check_out_date %></p>
-        <p class="card-text">Room Type: <%= reservation.room_type %></p>
-        <p class="card-text">Room Number: <%= reservation.room_number %></p>
-        <h5 class="card-text">Status: <%= reservation.status %></h5>
-        <button class="btn btn-primary modify" data-reservation-id="<%= reservation.reservation_id %>">Modify</button>
-      </div>
-    </div>
-  <% }); %>
-<% } %>
+  <% } else { %>
+    <% reservations.reverse().forEach((reservation, index)=> { %>
+      <% if (isAdmin) { %>
+        <div class="col-12 col-md-6 col-lg-4">
+          <%}%>
+            <div class="card reservation">
+              <div class="card-body">
+                <h5 class="card-title">Reservation ID: <span class="res-id">
+                    <%= reservation.reservation_id %>
+                  </span></h5>
+                <p class="card-text">Guest name: <%= reservation.guest_name %>
+                </p>
+                <p class="card-text">Arrival Date: <%= reservation.check_in_date %>
+                </p>
+                <p class="card-text">Departure Date: <%= reservation.check_out_date %>
+                </p>
+                <p class="card-text">Room Type: <%= reservation.room_type %>
+                </p>
+                <p class="card-text">Room Number: <%= reservation.room_number %>
+                </p>
+                <h5 class="card-text">Status: <%= reservation.status %>
+                </h5>
+                <!--if were not admin show check in and check out buttons-->
+                <% if (!isAdmin) { %>
 
-<script>
-  document.querySelectorAll('.modify').forEach((button, index) => {
-    button.addEventListener('click', async () => {
-      const reservationId = button.dataset.reservationId;
-      //post to getReservationById
-      const response = await fetch('/getReservationById', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          reservationId: reservationId
-        })
-      });
-      const reservation = await response.json();
+                  <button class="btn btn-primary check-in" data-reservation-id="<%= reservation.reservation_id %>">Check
+                    In</button>
+                  <button class="btn btn-primary check-out"
+                    data-reservation-id="<%= reservation.reservation_id %>">Check Out</button>
+                  <% } %>
+              </div>
+              <div class="card-footer">
+                <button class="btn btn-outline-primary modify"
+                  data-reservation-id="<%= reservation.reservation_id %>">Edit
+                  Reservation</button>
+              </div>
+            </div>
+            <% if (isAdmin) { %>
+        </div>
+        <%}%>
+          <% }); %>
+            <% } %>
 
-      document.getElementById('modify-id').textContent = reservation.reservation_id;
-      document.getElementById('guestName').value = reservation.guest_name;
-      document.getElementById('room_number').value = reservation.room_number;
-      document.getElementById('room_type').value = reservation.room_type;
-      document.getElementById('check_in_date').value = parseDate(reservation.check_in_date);
-      document.getElementById('check_out_date').value = parseDate(reservation.check_out_date);
-      //get and show modal 
-      const modifyModal = new bootstrap.Modal(document.getElementById('modifyModal'));
-      modifyModal.show();
+              <script>
 
-      // Save modified reservation
-      document.getElementById('saveModify').addEventListener('click', async () => {
-        const guestName = document.getElementById('guestName').value;
-        const room_number = parseInt(document.getElementById('room_number').value);
-        const room_type = document.getElementById('room_type').value;
-        const check_in_date = parseDate(document.getElementById('check_in_date').value);
-        const check_out_date = parseDate(document.getElementById('check_out_date').value);
-        const response = await fetch('/modifyReservation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-              reservation_id: reservation.reservation_id,
-              guest_name: guestName,
-              room_number: parseInt(room_number),
-              check_in_date: check_in_date,
-              check_out_date: check_out_date,
-              room_type: room_type,
-              status: reservation.status
-          })
-        });
-        if (!response.ok) {
-          throw new Error('Network response was not ok' + response);
-        } else {
-         //change button text to modified and disable
-         const saveButton = document.getElementById('saveModify');
-         saveButton.textContent = 'Modified';
-         saveButton.disabled = true;
-        }
-      });
-    });
-  });
+                document.querySelectorAll('.modify').forEach((button, index) => {
+                  button.addEventListener('click', async () => {
+                    const reservationId = button.dataset.reservationId;
+                    //post to getReservationById
+                    const response = await fetch('/getReservationById', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        reservationId: reservationId
+                      })
+                    });
+                    const reservation = await response.json();
 
-//handling the date, if empty use todays date
-function parseDate(date) {
-  if (date === '') {
-    return new Date().toString();
-  }
-  return date.toString();
-}
-</script>
+                    //set retrieved reservation values to the modal fields
+                    document.getElementById('modify-id').textContent = reservation.reservation_id;
+                    document.getElementById('guestName').value = reservation.guest_name;
+                    document.getElementById('room_number').value = reservation.room_number;
+                    document.getElementById('room_type').value = reservation.room_type;
+                    document.getElementById('check_in_date').value = parseDate(reservation.check_in_date);
+                    document.getElementById('check_out_date').value = parseDate(reservation.check_out_date);
+                    //if the dom has status, set the status
+                    if (document.getElementById('status')) {
+                      document.getElementById('status').value = reservation.status;
+                    }
+                    //get and show modal 
+                    const modifyModal = new bootstrap.Modal(document.getElementById('modifyModal'));
+                    modifyModal.show();
+
+                    // Save modified reservation
+                    document.getElementById('saveModify').addEventListener('click', async () => {
+                      const guestName = document.getElementById('guestName').value;
+                      const room_number = parseInt(document.getElementById('room_number').value);
+                      const room_type = document.getElementById('room_type').value;
+                      const check_in_date = parseDate(document.getElementById('check_in_date').value);
+                      const check_out_date = parseDate(document.getElementById('check_out_date').value);
+                      //if the dom has an element called status retrieve the value, else use the reservation status
+                      const status = document.getElementById('status') ? document.getElementById('status').value : reservation.status;
+
+                      const response = await fetch('/modifyReservation', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                          user_id: reservation.user_id,
+                          reservation_id: reservation.reservation_id,
+                          guest_name: guestName,
+                          room_number: parseInt(room_number),
+                          check_in_date: check_in_date,
+                          check_out_date: check_out_date,
+                          room_type: room_type,
+                          status: status
+                        })
+                      });
+                      if (!response.ok) {
+                        throw new Error('Network response was not ok' + response);
+                        button.textContent = response.json().details
+                      } else {
+                        //change button text to modified and disable
+                        const saveButton = document.getElementById('saveModify');
+                        saveButton.disabled = true;
+                        saveButton.textContent = response.json().message ? response.json().message : 'Update Completed. Reload.';
+                      }
+                    });
+
+                    // cancel reservation
+                    //check if reservation state is already cancelled
+                    if (reservation.status === 'CANCELLED') {
+                      const cancelButton = document.getElementById('cancelReservation');
+                      cancelButton.textContent = 'Cancelled';
+                      cancelButton.disabled = true;
+                    }
+                    document.getElementById('cancelReservation').addEventListener('click', async () => {
+                      const response = await fetch('/cancelReservation', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                          reservation_id: reservation.reservation_id
+                        })
+                      });
+                      if (!response.ok) {
+                        throw new Error('Network response was not ok' + response);
+                      } else {
+                        //change button text to modified and disable
+                        const cancelButton = document.getElementById('cancelReservation');
+                        cancelButton.textContent = 'Cancelled';
+                        cancelButton.disabled = true;
+                        messageParagraph.textContent = response.message
+                      }
+                    });
+                  });
+                });
+
+                //check in reservation
+                document.querySelectorAll('.check-in').forEach((button, index) => {
+                  
+                  button.addEventListener('click', async () => {
+                    const reservationId = button.dataset.reservationId;
+                    const response = await fetch('/checkInReservation', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        reservation_id: reservationId
+                      })
+                    });
+                    if (!response.ok) {
+                      throw new Error('Network response was not ok' + response);
+                    } else {
+                      const result = await response.json();
+                      //if result has an error value show the erro
+                      if (result.error) {
+                        button.textContent = `Error: ${result.error}`;
+                        //set class list to warning colours
+                        button.classList.add('btn-outline-danger');
+                        button.classList.remove('btn-primary');
+                        button.disabled = true; 
+                      } else {
+                        button.textContent = 'Checked In Successfully!';
+                        //set class list to success colours
+                        button.classList.add('btn-outline-success');
+                        button.classList.remove('btn-primary');
+                        button.disabled = true;
+                      }
+                    }
+                  });
+                });
+
+                //check out reservation
+                document.querySelectorAll('.check-out').forEach((button, index) => {
+                  button.addEventListener('click', async () => {
+                    const reservationId = button.dataset.reservationId;
+                    const response = await fetch('/checkOutReservation', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        reservation_id: reservationId
+                      })
+                    });
+                    if (!response.ok) {
+                      throw new Error('Network response was not ok' + response);
+                    } else {
+                      const result = await response.json();
+                      //if result has an error value show the erro
+                      if (result.error) {
+                        button.textContent = `Error: ${result.error}`;
+                        //set class list to warning colours
+                        button.classList.add('btn-outline-danger');
+                        button.classList.remove('btn-primary');
+                        button.disabled = true;
+                      } else {
+                        button.textContent = 'Checked Out Successfully!';
+                        //set class list to success colours
+                        button.classList.add('btn-outline-success');
+                        button.classList.remove('btn-primary');
+                        button.disabled = true;
+                      }
+                    }
+                  });
+                });
+
+              </script>

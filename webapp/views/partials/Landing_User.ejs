@@ -1,21 +1,72 @@
 <div class="row">
-  <div class="col-md-4 col-sm-6 col-12">
-    <%- include('partials/Card', {pretitle: 'Make a', keytitle: 'Dinner Reservation'}) %>
+  <div class="col-12">
+    <h1>Hello user <span class="nerd-text">abc123</span></h1>
+    <h5>Welcome to gRPC Inn.</h5>
+    <p>Please make a reservation below, or interact your current reservations in the sidebar to the left.</p>
+    <form id="reservationForm">
+      <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" class="form-control" id="name">
+        <label for="roomType" class="form-label">Room Type</label>
+        <select class="form-select" id="roomType" aria-label="Select Room Type">
+          <option selected>Select Room Type</option>
+          <option value="SINGLE">Single</option>
+          <option value="DOUBLE">Double</option>
+          <option value="FAMILY">Family</option>
+          <option value="SUITE">Suite</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="checkIn" class="form-label">Check In</label>
+        <input type="date" class="form-control" id="checkIn">
+      </div>
+      <div class="mb-3">
+        <label for="checkOut" class="form-label">Check Out</label>
+        <input type="date" class="form-control" id="checkOut">
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+      <p id="createMessage"></p>
+    </form>
   </div>
-  <div class="col-md-4 col-sm-6 col-12">
-    <%- include('partials/Card', {pretitle: 'Choose a time for', keytitle: 'Breakfast'}) %>
-  </div>
-  <div class="col-md-4 col-sm-6 col-12">
-    <%- include('partials/Card', {pretitle: 'Request', keytitle: 'Room Service'}) %>
-  </div>
-  <div class="col-md-4 col-sm-6 col-12">
-    <%- include('partials/Card', {pretitle: 'Book a', keytitle: 'Taxi'}) %>
-  </div>
-  <div class="col-md-4 col-sm-6 col-12">
-    <%- include('partials/Card', {pretitle: 'See Local', keytitle: 'Attractions'}) %>
-  </div>
-  <div class="col-md-4 col-sm-6 col-12">
-    <%- include('partials/Card', {pretitle: 'Get in', keytitle: 'Touch'}) %>  </div>
-
 </div>
 
+<script>
+  //create a reservation on form submit
+  document.getElementById("reservationForm").addEventListener("submit", async (event) => {
+    // Prevent the default form submission
+    event.preventDefault();
+
+    // Get the form values
+    var name = document.getElementById("name").value;
+    var roomType = document.getElementById("roomType").value;
+    var checkIn = parseDate(document.getElementById("checkIn").value);
+    var checkOut = parseDate(document.getElementById("checkOut").value);
+
+    console.log('name:', name);
+    console.log('roomType:', roomType);
+    console.log('checkIn:', checkIn);
+    console.log('checkOut:', checkOut);
+    // Create a new reservation
+    const response = await fetch('/makeReservation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: 'abc123', // Hardcoded around app for now, ui doesnt support dynamic user id its just a sample
+        guest_name: name,
+        check_in_date: checkIn,
+        check_out_date: checkOut,
+        room_type: roomType
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    } else {
+      // Show create message
+      document.getElementById("createMessage").textContent = "Reservation created successfully! Reloading...";
+reloadSoon();
+    }
+  });
+</script>
