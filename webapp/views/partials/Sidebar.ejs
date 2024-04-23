@@ -1,0 +1,7 @@
+        <!-- show reservations side bar for users only-->
+        <% if (!isAdmin) { %>
+          <div class="col-3 sidebar bg-light">
+          <h2>Your Reservations</h2>
+          <%- include ReservationCards.ejs %>
+        </div>
+        <% } %>

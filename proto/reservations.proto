@@ -15,63 +15,50 @@ enum RoomType {
     SUITE = 3;
 }
 
-// Reservation object
 message Reservation {
-    int64 id = 1;
-    string user_id = 2;
-    string arrival_date = 3;
-    string departure_date = 4;
-    string check_in_time = 5;
-    string check_out_time = 6;
-    RoomType room_type = 7;
-    int32 room_number = 8;
-    ReservationStatus status = 9;
+  string reservation_id = 1;
+  string guest_name = 2;
+  string room_number = 3;
+  string check_in_date = 4;
+  string check_out_date = 5;
+  RoomType room_type = 6;
+  ReservationStatus status = 7;
 }
 
-// User object
-message User {
-    string id = 1;
-    string name = 2;
-    repeated Reservation reservations = 3;
-}
-
-// Define the service
 service ReservationService {
-    rpc CheckIn(CheckInRequest) returns (Reservation) {}
-    rpc CheckOut(CheckOutRequest) returns (Reservation) {}
-    rpc CreateReservation(Reservation) returns (Reservation) {}
-    rpc UpdateReservation(UpdateReservationRequest) returns (Reservation) {}
-    rpc GetReservationById(GetReservationByIdRequest) returns (Reservation) {}
-    rpc CancelReservation(CancelReservationRequest) returns (Reservation) {}
+    //create a new reservation
+  rpc MakeReservation(Reservation) returns (ReservationResponse);
+  //update an existing reservation
+  rpc ModifyReservation(Reservation) returns (ReservationMessageResponse);
+  //cancel an existing reservation
+  rpc CancelReservation(GetReservationRequest) returns (ReservationMessageResponse);
+  //get a reservation by id
+  rpc GetReservation(GetReservationRequest) returns (ReservationResponse);
+  //get all reservations
+  rpc GetAllReservations(EmptyRequest) returns (AllReservationResponse);
 }
 
-// Request to get reservation by id
-message GetReservationByIdRequest {
-    int64 id = 1;
+/////REQUESTS//////
+//request to get a reservation by id
+message GetReservationRequest {
+    string reservation_id = 1;
+}
+//empty request
+message EmptyRequest {}
+
+/////RESPONSES//////
+//response to a reservation request returns the given reservation object and a message
+message ReservationMessageResponse {
+    Reservation reservation = 1;
+    string message = 2;
+}
+//response to a reservation that returns the reservation object
+message ReservationResponse {
+    Reservation reservation = 1;
 }
 
-// Request to check in
-message CheckInRequest {
-    int64 id = 1;
-    string check_in_time = 2;
+//response to get all reservations
+message AllReservationResponse {
+    repeated Reservation reservations = 1;
 }
 
-// Request to check out
-message CheckOutRequest {
-    int64 id = 1;
-    string check_out_time = 2;
-}
-
-// Request to cancel reservation
-message CancelReservationRequest {
-    int64 id = 1;
-}
-
-// Request to update reservation by id
-message UpdateReservationRequest {
-    int64 id = 1;
-    string arrival_date = 2;
-    string departure_date = 3;
-    RoomType room_type = 4;
-    int32 room_number = 5;
-}

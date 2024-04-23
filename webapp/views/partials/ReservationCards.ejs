@@ -1,0 +1,128 @@
+<!--reservation modify modal -->
+<div class="modal fade" id="modifyModal" tabindex="-1" aria-labelledby="modifyModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="modifyModalLabel">Modify Reservation ID: <span id="modify-id"></span></h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="guestName" class="form-label">Guest Name</label>
+            <input type="text" class="form-control" id="guestName">
+          </div>
+          <div class="mb-3">
+            <label for="room_number" class="form-label">Room Number</label>
+            <input type="text" class="form-control" id="room_number">
+          </div>
+          <div class="mb-3">
+            <label for="room_type" class="form-label">Room Type</label>
+            <input type="text" class="form-control" id="room_type">
+          </div>
+          <div class="mb-3">
+            <label for="check_in_date" class="form-label">Check In Date</label>
+            <input type="date" class="form-control" id="check_in_date">
+          </div>
+          <div class="mb-3">
+            <label for="check_out_date" class="form-label">Check Out Date</label>
+            <input type="date" class="form-control" id="check_out_date">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveModify">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--Get Reservations From Server-->
+<% if (reservations.length === 0) { %>
+  <p>No reservations found.</p>
+<% } else { %>
+  <% reservations.forEach((reservation, index) => { %>
+    <div class="card reservation">
+      <div class="card-body">
+        <h5 class="card-title">Reservation ID: <span class="res-id"><%= reservation.reservation_id %></span></h5>
+        <p class="card-text">Guest name: <%= reservation.guest_name %></p>
+        <p class="card-text">Arrival Date: <%= reservation.check_in_date %></p>
+        <p class="card-text">Departure Date: <%= reservation.check_out_date %></p>
+        <p class="card-text">Room Type: <%= reservation.room_type %></p>
+        <p class="card-text">Room Number: <%= reservation.room_number %></p>
+        <h5 class="card-text">Status: <%= reservation.status %></h5>
+        <button class="btn btn-primary modify" data-reservation-id="<%= reservation.reservation_id %>">Modify</button>
+      </div>
+    </div>
+  <% }); %>
+<% } %>
+
+<script>
+  document.querySelectorAll('.modify').forEach((button, index) => {
+    button.addEventListener('click', async () => {
+      const reservationId = button.dataset.reservationId;
+      //post to getReservationById
+      const response = await fetch('/getReservationById', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reservationId: reservationId
+        })
+      });
+      const reservation = await response.json();
+
+      document.getElementById('modify-id').textContent = reservation.reservation_id;
+      document.getElementById('guestName').value = reservation.guest_name;
+      document.getElementById('room_number').value = reservation.room_number;
+      document.getElementById('room_type').value = reservation.room_type;
+      document.getElementById('check_in_date').value = parseDate(reservation.check_in_date);
+      document.getElementById('check_out_date').value = parseDate(reservation.check_out_date);
+      //get and show modal 
+      const modifyModal = new bootstrap.Modal(document.getElementById('modifyModal'));
+      modifyModal.show();
+
+      // Save modified reservation
+      document.getElementById('saveModify').addEventListener('click', async () => {
+        const guestName = document.getElementById('guestName').value;
+        const room_number = parseInt(document.getElementById('room_number').value);
+        const room_type = document.getElementById('room_type').value;
+        const check_in_date = parseDate(document.getElementById('check_in_date').value);
+        const check_out_date = parseDate(document.getElementById('check_out_date').value);
+        const response = await fetch('/modifyReservation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              reservation_id: reservation.reservation_id,
+              guest_name: guestName,
+              room_number: parseInt(room_number),
+              check_in_date: check_in_date,
+              check_out_date: check_out_date,
+              room_type: room_type,
+              status: reservation.status
+          })
+        });
+        if (!response.ok) {
+          throw new Error('Network response was not ok' + response);
+        } else {
+         //change button text to modified and disable
+         const saveButton = document.getElementById('saveModify');
+         saveButton.textContent = 'Modified';
+         saveButton.disabled = true;
+        }
+      });
+    });
+  });
+
+//handling the date, if empty use todays date
+function parseDate(date) {
+  if (date === '') {
+    return new Date().toString();
+  }
+  return date.toString();
+}
+</script>
